@@ -1,0 +1,16 @@
+parameters:
+  - $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+  - $ref: '../components/parameters.yaml#/components/parameters/TraceParentHeader'
+  - $ref: '../components/parameters.yaml#/components/parameters/AuthorizationHeader'
+  - $ref: '../components/parameters.yaml#/components/parameters/EventIdPath'
+get:
+  summary: Consultar status de evento
+  operationId: getEventStatus
+  responses:
+    '200':
+      $ref: '../components/schemas.yaml#/responses/EventStatusResponse'
+    '401': {}
+    '404': {}
+    '429':
+      $ref: '../components/responses.yaml#/TooManyRequests'
+    '500': {}

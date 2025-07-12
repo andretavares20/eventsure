@@ -1,0 +1,582 @@
+openapi: 3.0.0
+info:
+  title: EventSure API
+  version: 1.0.0
+servers:
+  - url: https://api.eventsure.io
+paths:
+  /v1/events:
+    post:
+      summary: Ingestão de eventos
+      description: |
+        Recebe um evento do cliente, garante idempotência, publica de forma assíncrono
+        em nosso event bus e aplica política de retry com exponential back-off.
+      x-partition-key:
+        name: customerId
+        description: |
+          Campo usado para particionar os eventos no Kafka/RabbitMQ.
+          Todas as mensagens com o mesmo customerId vão para a mesma partição,
+          garantindo ordenação por cliente.
+      x-default-retry-policy:
+        maxRetries: 5
+        initialIntervalMs: 500
+        multiplier: 2.0
+        maxIntervalMs: 60000
+      operationId: createEvent
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+            example: Bearer <token>
+        - in: header
+          name: Idempotency-Key
+          description: Chave para garantir processamento único de requisições duplicadas.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+            example:
+              id: "e7a1c3f0-3ed2-4db9-9a1f-abc123456789"
+              customerId: "cust_001"
+              eventType: "order.created"
+              payload:
+                orderId: 12345
+                amount: 150.75
+      responses:
+        '202':
+          description: Aceito para processamento assíncrono. Retorna antes do dispatch.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+              example:
+                id: "e7a1c3f0-3ed2-4db9-9a1f-abc123456789"
+                status: "accepted"
+        '400':
+          description: Erro de validação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "validation_error"
+                message: "customerId é obrigatório"
+        '401':
+          description: Não autorizado.
+        '500':
+          description: Erro interno do servidor.
+  /v1/events/{id}:
+    parameters:
+      - in: header
+        name: Authorization
+        required: true
+        schema:
+          type: string
+          example: Bearer <token>
+      - in: path
+        name: id
+        description: Identificador único do evento.
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Consultar status de evento
+      description: |
+        Retorna o status atual do evento e histórico de tentativas.
+        Inclui timestamps de cada tentativa e resultado associado.
+      operationId: getEventStatus
+      responses:
+        '200':
+          description: Status e histórico de tentativas do evento.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStatus'
+              example:
+                id: "e7a1c3f0-3ed2-4db9-9a1f-abc123456789"
+                status: "delivered"
+                attempts:
+                  - attemptId: "att-001"
+                    timestamp: "2025-07-11T12:35:10Z"
+                    status: "failed"
+                    errorMessage: "Timeout connecting to webhook"
+                  - attemptId: "att-002"
+                    timestamp: "2025-07-11T12:36:10Z"
+                    status: "delivered"
+        '401':
+          description: Não autorizado.
+        '404':
+          description: Evento não encontrado.
+        '500':
+          description: Erro interno do servidor.
+  /v1/subscriptions:
+    get:
+      summary: Listar assinaturas de webhook
+      description: Retorna todas as assinaturas ativas do cliente.
+      operationId: listSubscriptions
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+            example: Bearer <token>
+      responses:
+        '200':
+          description: Lista de assinaturas.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+              example:
+                - id: "a1b2c3d4-e5f6-7a8b-9c0d-ef1234567890"
+                  url: "https://client.com/webhook"
+                  headers:
+                    X-Custom-Header: "value"
+                  retryPolicy:
+                    maxRetries: 5
+                    initialIntervalMs: 500
+                    multiplier: 2.0
+                    maxIntervalMs: 60000
+                  createdAt: "2025-07-11T12:34:56Z"
+                  active: true
+        '401':
+          description: Não autorizado.
+        '500':
+          description: Erro interno do servidor.
+    post:
+      summary: Criar nova assinatura de webhook
+      description: Cadastra um endpoint para recebimento de eventos.
+      operationId: createSubscription
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+            example: Bearer <token>
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+            example:
+              url: "https://client.com/hook"
+              headers:
+                X-API-Key: "abcd1234"
+              retryPolicy:
+                maxRetries: 3
+                initialIntervalMs: 1000
+                multiplier: 2.0
+                maxIntervalMs: 30000
+      responses:
+        '201':
+          description: Assinatura criada com sucesso.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+              example:
+                id: "a1b2c3d4-e5f6-7a8b-9c0d-ef1234567890"
+                url: "https://client.com/hook"
+                headers:
+                  X-API-Key: "abcd1234"
+                retryPolicy:
+                  maxRetries: 3
+                  initialIntervalMs: 1000
+                  multiplier: 2.0
+                  maxIntervalMs: 30000
+                createdAt: "2025-07-11T12:35:00Z"
+                active: true
+        '400':
+          description: Erro de validação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "validation_error"
+                message: "URL inválida"
+        '401':
+          description: Não autorizado.
+        '500':
+          description: Erro interno do servidor.
+  /v1/subscriptions/{id}:
+    parameters:
+      - in: header
+        name: Authorization
+        required: true
+        schema:
+          type: string
+          example: Bearer <token>
+      - in: path
+        name: id
+        description: Identificador da assinatura.
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Obter assinatura por ID
+      description: Retorna os detalhes de uma assinatura específica.
+      operationId: getSubscriptionById
+      responses:
+        '200':
+          description: Assinatura encontrada.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+              example:
+                id: "a1b2c3d4-e5f6-7a8b-9c0d-ef1234567890"
+                url: "https://client.com/webhook"
+                headers:
+                  X-Custom-Header: "value"
+                retryPolicy:
+                  maxRetries: 5
+                  initialIntervalMs: 500
+                  multiplier: 2.0
+                  maxIntervalMs: 60000
+                createdAt: "2025-07-11T12:34:56Z"
+                active: true
+        '401':
+          description: Não autorizado.
+        '404':
+          description: Assinatura não encontrada.
+        '500':
+          description: Erro interno do servidor.
+    patch:
+      summary: Atualizar assinatura
+      description: |-
+        Permite atualização parcial de URL, headers ou retryPolicy de uma assinatura existente.
+      operationId: updateSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+            example:
+              url: "https://client.com/new-hook"
+              headers:
+                X-New-Header: "new-value"
+              retryPolicy:
+                maxRetries: 10
+                initialIntervalMs: 200
+                multiplier: 2.0
+                maxIntervalMs: 120000
+      responses:
+        '200':
+          description: Assinatura atualizada com sucesso.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+              example:
+                id: "a1b2c3d4-e5f6-7a8b-9c0d-ef1234567890"
+                url: "https://client.com/new-hook"
+                headers:
+                  X-New-Header: "new-value"
+                retryPolicy:
+                  maxRetries: 10
+                  initialIntervalMs: 200
+                  multiplier: 2.0
+                  maxIntervalMs: 120000
+                createdAt: "2025-07-11T12:35:00Z"
+                active: true
+        '400':
+          description: Erro de validação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "validation_error"
+                message: "URL inválida opcional"
+        '401':
+          description: Não autorizado.
+        '404':
+          description: Assinatura não encontrada.
+        '500':
+          description: Erro interno do servidor.
+    delete:
+      summary: Remover assinatura
+      description: Remove (ou desativa) uma assinatura existente.
+      operationId: deleteSubscription
+      responses:
+        '204':
+          description: Assinatura removida com sucesso. Sem conteúdo de retorno.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+        '401':
+          description: Não autorizado.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+        '404':
+          description: Assinatura não encontrada.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+        '500':
+          description: Erro interno do servidor.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+  /v1/subscriptions/{id}/events:
+    parameters:
+      - in: header
+        name: Authorization
+        required: true
+        schema:
+          type: string
+          example: Bearer <token>
+      - in: path
+        name: id
+        description: Identificador da assinatura.
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Listar eventos por assinatura
+      description: |
+        Retorna todos os eventos associados à assinatura especificada,
+        com status e timestamp de envio para auditoria.
+      operationId: listEventsBySubscription
+      responses:
+        '200':
+          description: Lista de eventos.
+          headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionEvent'
+              example:
+                - id: "e7a1c3f0-3ed2-4db9-9a1f-abc123456789"
+                  eventType: "order.created"
+                  status: "delivered"
+                  createdAt: "2025-07-11T12:35:10Z"
+                - id: "f8b2d4e1-7fa2-4c3b-ab12-cde123fed456"
+                  eventType: "payment.failed"
+                  status: "pending"
+                  createdAt: "2025-07-11T12:40:00Z"
+        '401':
+          description: Não autorizado.
+        '404':
+          description: Assinatura não encontrada.
+        '500':
+          description: Erro interno do servidor.
+components:
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único do evento.
+        customerId:
+          type: string
+          description: |
+            ID do cliente gerador do evento. Também usado como partition key
+            para garantir ordenação por cliente.
+        eventType:
+          type: string
+          description: Tipo do evento (e.g., order.created).
+        payload:
+          type: object
+          description: Dados específicos do evento.
+      required:
+        - id
+        - customerId
+        - eventType
+        - payload
+    Ack:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identifier do evento aceito.
+        status:
+          type: string
+          description: Status do processamento inicial.
+      required:
+        - id
+        - status
+    Attempt:
+      type: object
+      properties:
+        attemptId:
+          type: string
+          description: Identificador da tentativa.
+        timestamp:
+          type: string
+          format: date-time
+          description: Momento em que a tentativa foi realizada.
+        status:
+          type: string
+          description: Resultado da tentativa (e.g., failed, delivered).
+        errorMessage:
+          type: string
+          description: Mensagem de erro caso a tentativa falhe.
+      required:
+        - attemptId
+        - timestamp
+        - status
+    EventStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único do evento.
+        status:
+          type: string
+          description: Status atual do evento (pending, delivered, failed).
+        attempts:
+          type: array
+          description: Lista ordenada de tentativas de dispatch.
+          items:
+            $ref: '#/components/schemas/Attempt'
+      required:
+        - id
+        - status
+        - attempts
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da assinatura.
+        url:
+          type: string
+          format: uri
+          description: URL de destino do webhook.
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Cabeçalhos customizados para envio.
+        retryPolicy:
+          $ref: '#/components/schemas/RetryPolicy'
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp de criação da assinatura.
+        active:
+          type: boolean
+          description: Indica se a assinatura está ativa.
+      required:
+        - id
+        - url
+        - active
+    SubscriptionRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL de destino do webhooks.
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Cabeçalhos customizados para envio.
+        retryPolicy:
+          $ref: '#/components/schemas/RetryPolicy'
+      required:
+        - url
+    SubscriptionEvent:
+      type: object
+      description: Evento associado a uma assinatura para auditoria.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador do evento.
+        eventType:
+          type: string
+          description: Tipo do evento (e.g., order.created).
+        status:
+          type: string
+          description: Status atual do dispatch (pending, delivered, failed).
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp de publicação do evento.
+      required:
+        - id
+        - eventType
+        - status
+        - createdAt
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    RetryPolicy:
+      type: object
+      description: Configuração de retry com exponential back-off.
+      properties:
+        maxRetries:
+          type: integer
+          description: Número máximo de tentativas antes de enviar para dead-letter queue.
+          example: 5
+        initialIntervalMs:
+          type: integer
+          description: Intervalo inicial em milissegundos antes da primeira tentativa de retry.
+          example: 500
+        multiplier:
+          type: number
+          description: Fator de multiplicação para aumento exponencial do intervalo entre retries.
+          example: 2.0
+        maxIntervalMs:
+          type: integer
+          description: Intervalo máximo em milissegundos entre tentativas.
+          example: 60000
+      required:
+        - maxRetries
+        - initialIntervalMs
+        - multiplier
+        - maxIntervalMs

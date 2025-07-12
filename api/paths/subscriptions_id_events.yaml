@@ -1,0 +1,25 @@
+parameters:
+  - $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+  - $ref: '../components/parameters.yaml#/components/parameters/TraceParentHeader'
+  - $ref: '../components/parameters.yaml#/components/parameters/AuthorizationHeader'
+  - $ref: '../components/parameters.yaml#/components/parameters/SubscriptionIdPath'
+get:
+  summary: Listar eventos por assinatura com paginação
+  operationId: listEventsBySubscription
+  parameters:
+    - $ref: '../components/parameters.yaml#/limit'
+    - $ref: '../components/parameters.yaml#/offset'
+  responses:
+    '200':
+      description: Lista de eventos paginada
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas.yaml#/schemas/SubscriptionEvent'
+    '401': {}
+    '404': {}
+    '429':
+      $ref: '../components/responses.yaml#/TooManyRequests'
+    '500': {}

@@ -1,0 +1,53 @@
+# Número de réplicas do Deployment
+replicaCount: 2
+
+# Imagem Docker gerada no CI
+image:
+  repository: eventsure-api
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Porta exposta pela aplicação (deve bater com server.port no Spring)
+service:
+  type: ClusterIP
+  port: 8080
+
+# Recursos de CPU/memória
+resources:
+  requests:
+    cpu: 250m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# (Opcional) configurações de liveness/readiness
+livenessProbe:
+  httpGet:
+    path: /actuator/health    
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health    
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+# Ingress configuration
+ingress:
+  enabled: false               # Habilita o Ingress
+  className: ""                # IngressClass (p.ex. nginx), vazio usa o default
+  annotations: {}              # Exemplo: { "kubernetes.io/ingress.class": "nginx" }
+  hosts:
+    - host: example.com        # Substitua pelo seu domínio
+      paths:
+        - path: /              # O path a expor
+          pathType: Prefix
+  tls: []                      # Se quiser TLS, ex:
+    # - hosts:
+    #     - example.com
+    #   secretName: example-tls
+

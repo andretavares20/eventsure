@@ -1,0 +1,35 @@
+openapi: 3.0.0
+info:
+  title: EventSure API
+  version: 1.0.0
+servers:
+  - url: https://api.eventsure.io
+paths:
+  /health:
+    $ref: './paths/health.yaml'
+  /metrics:
+    $ref: './paths/metrics.yaml'
+  /v1/events:
+    $ref: './paths/events.yaml'
+  /v1/events/{id}:
+    $ref: './paths/events_id.yaml'
+  /v1/subscriptions:
+    $ref: './paths/subscriptions.yaml'
+  /v1/subscriptions/{id}:
+    $ref: './paths/subscriptions_id.yaml'
+  /v1/subscriptions/{id}/events:
+    $ref: './paths/subscriptions_id_events.yaml'
+components:
+  schemas:
+    $ref: './components/schemas.yaml'
+  parameters:
+    $ref: './components/parameters.yaml'
+  responses:
+    $ref: './components/responses.yaml'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []

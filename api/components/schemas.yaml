@@ -1,0 +1,232 @@
+schemas:
+  Event:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Identificador único do evento.
+      customerId:
+        type: string
+        description: ID do cliente gerador do evento. Partition key.
+      eventType:
+        type: string
+        description: Tipo do evento (e.g., order.created).
+      payload:
+        type: object
+        description: Dados específicos do evento.
+    required:
+      - id
+      - customerId
+      - eventType
+      - payload
+  Ack:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Identifier do evento aceito.
+      status:
+        type: string
+        description: Status do processamento inicial.
+    required:
+      - id
+      - status
+  Attempt:
+    type: object
+    properties:
+      attemptId:
+        type: string
+        description: Identificador da tentativa.
+      timestamp:
+        type: string
+        format: date-time
+        description: Momento em que a tentativa foi realizada.
+      status:
+        type: string
+        description: Resultado da tentativa (e.g., failed, delivered).
+      errorMessage:
+        type: string
+        description: Mensagem de erro caso a tentativa falhe.
+    required:
+      - attemptId
+      - timestamp
+      - status
+  EventStatus:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Identificador único do evento.
+      status:
+        type: string
+        description: Status atual do evento (pending, delivered, failed).
+      attempts:
+        type: array
+        items:
+          $ref: '#/components/schemas/Attempt'
+        description: Lista ordenada de tentativas de dispatch.
+    required:
+      - id
+      - status
+      - attempts
+  Subscription:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Identificador único da assinatura.
+      url:
+        type: string
+        format: uri
+        description: URL de destino do webhook.
+      headers:
+        type: object
+        additionalProperties:
+          type: string
+        description: Cabeçalhos customizados para envio.
+      retryPolicy:
+        $ref: '#/components/schemas/RetryPolicy'
+      createdAt:
+        type: string
+        format: date-time
+        description: Timestamp de criação da assinatura.
+      active:
+        type: boolean
+        description: Indica se a assinatura está ativa.
+    required:
+      - id
+      - url
+      - active
+  SubscriptionRequest:
+    type: object
+    properties:
+      url:
+        type: string
+        format: uri
+        pattern: "^https://.+"
+        description: >
+          URL HTTPS obrigatória para destino dos webhooks.
+      headers:
+        type: object
+        additionalProperties:
+          type: string
+        description: Cabeçalhos customizados para envio.
+      retryPolicy:
+        $ref: '#/components/schemas/RetryPolicy'
+    required:
+      - url
+  SubscriptionEvent:
+    type: object
+    description: Evento associado a uma assinatura para auditoria.
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Identificador do evento.
+      eventType:
+        type: string
+        description: Tipo do evento (e.g., order.created).
+      status:
+        type: string
+        description: Status atual do dispatch (pending, delivered, failed).
+      createdAt:
+        type: string
+        format: date-time
+        description: Timestamp de publicação do evento.
+    required:
+      - id
+      - eventType
+      - status
+      - createdAt
+  Health:
+    type: object
+    properties:
+      status:
+        type: string
+        description: Health status, e.g. up, down.
+      uptime:
+        type: number
+        description: Uptime in seconds.
+      timestamp:
+        type: string
+        format: date-time
+        description: Current server time.
+    required:
+      - status
+      - timestamp
+  Error:
+    type: object
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    required:
+      - code
+      - message
+  RetryPolicy:
+    type: object
+    properties:
+      maxRetries:
+        type: integer
+        description: Número máximo de tentativas antes de DLQ.
+      initialIntervalMs:
+        type: integer
+        description: Intervalo inicial em milissegundos antes da primeira tentativa.
+      multiplier:
+        type: number
+        description: Fator de multiplicação exponencial.
+      maxIntervalMs:
+        type: integer
+        description: Intervalo máximo em milissegundos.
+    required:
+      - maxRetries
+      - initialIntervalMs
+      - multiplier
+      - maxIntervalMs
+requestBodies:
+  EventRequestBody:
+    description: Payload para criação de um evento.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Event'
+  SubscriptionRequestBody:
+    description: Payload para criar/atualizar assinatura.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/SubscriptionRequest'
+responses:
+  AcceptedResponse:
+    description: Aceito para processamento assíncrono.
+    headers:
+            X-Request-ID:
+              $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Ack'
+  ValidationError:
+    description: Erro de validação.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Error'
+  EventStatusResponse:
+    description: Status e histórico de tentativas do evento.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/EventStatus'
+  SubscriptionCreated:
+    description: Assinatura criada com sucesso.
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Subscription'

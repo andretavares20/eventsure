@@ -1,0 +1,11 @@
+get:
+  summary: Metrics endpoint
+  description: Expose Prometheus metrics.
+  operationId: getMetrics
+  responses:
+    '200':
+      description: Prometheus metrics in text format.
+      content:
+        text/plain; version=0.0.4; charset=utf-8:
+          schema:
+            type: string

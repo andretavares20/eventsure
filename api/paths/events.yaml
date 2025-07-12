@@ -1,0 +1,42 @@
+post:
+  summary: Ingestão de eventos
+  description: |
+    Recebe um evento do cliente, garante idempotência, publica de forma assíncrono
+    em nosso event bus e aplica política de retry com exponential back-off.
+  x-partition-key:
+    name: customerId
+    description: >
+      Campo usado para particionar eventos horizontalmente (Kafka/DynamoDB).
+      Garante ordenação de eventos pelo mesmo customerId.
+  x-default-retry-policy:
+    description: >
+      Política de retry padrão: eventos com falha são reenviados até atingir maxRetries.
+      Após falhas, eventos vão para uma DLQ (Dead Letter Queue) para análise manual.
+    maxRetries: 5
+    initialIntervalMs: 500
+    multiplier: 2.0
+    maxIntervalMs: 60000
+  operationId: createEvent
+  parameters:
+    - $ref: '../components/parameters.yaml#/components/parameters/XRequestIdHeader'
+    - $ref: '../components/parameters.yaml#/components/parameters/TraceParentHeader'
+    - $ref: '../components/parameters.yaml#/components/parameters/AuthorizationHeader'
+    - in: header
+      name: Idempotency-Key
+      required: true
+      schema:
+        type: string
+      description: >
+        Chave única para garantir idempotência. Armazenada por até 24h.
+        Requisições repetidas com a mesma chave retornam o resultado original.
+  requestBody:
+    $ref: '../components/schemas.yaml#/EventRequestBody'
+  responses:
+    '202':
+      $ref: '../components/schemas.yaml#/responses/AcceptedResponse'
+    '400':
+      $ref: '../components/schemas.yaml#/responses/ValidationError'
+    '401': {}
+    '429':
+      $ref: '../components/responses.yaml#/TooManyRequests'
+    '500': {}

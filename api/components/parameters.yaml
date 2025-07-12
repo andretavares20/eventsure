@@ -1,0 +1,57 @@
+components:
+  parameters:
+    XRequestIdHeader:
+      name: X-Request-ID
+      in: header
+      required: false
+      schema:
+        type: string
+      description: >
+        Correlation ID para rastreamento de requisição.
+    TraceParentHeader:
+      name: traceparent
+      in: header
+      required: false
+      schema:
+        type: string
+      description: >
+        W3C Trace Context header para correlação de spans (OpenTelemetry).
+    AuthorizationHeader:
+      name: Authorization
+      in: header
+      required: true
+      schema:
+        type: string
+        example: Bearer <token>
+    EventIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SubscriptionIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 50
+      description: Número máximo de itens a retornar.
+    offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Número de itens a pular antes de iniciar a listagem.

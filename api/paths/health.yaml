@@ -1,0 +1,11 @@
+get:
+  summary: Health check
+  description: Liveness and readiness check.
+  operationId: getHealth
+  responses:
+    '200':
+      description: Service is healthy.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas.yaml#/schemas/Health'

@@ -1,0 +1,32 @@
+responses:
+  TooManyRequests:
+    description: Too Many Requests - rate limit exceeded.
+    headers:
+      Retry-After:
+        description: Tempo em segundos para o cliente esperar antes de nova requisição.
+        schema:
+          type: integer
+    content:
+      application/json:
+        schema:
+          $ref: './schemas.yaml#/Error'
+        example:
+          code: "rate_limit_exceeded"
+          message: "Você excedeu o limite de requisições."
+  ValidationError:
+    description: Erro de validação.
+    content:
+      application/json:
+        schema:
+          $ref: './schemas.yaml#/Error'
+        examples:
+          invalid_payload:
+            summary: Payload inválido
+            value:
+              code: invalid_payload
+              message: "Campo 'url' deve começar com HTTPS."
+          subscription_exists:
+            summary: Assinatura já existente
+            value:
+              code: subscription_exists
+              message: "Assinatura já existe para esta URL."

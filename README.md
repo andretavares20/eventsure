@@ -23,7 +23,7 @@ O EventSure atua como um **event delivery gateway**, permitindo que sistemas pub
 - ✅ Publicação de eventos via API REST
 - ✅ Entregas assíncronas com mecanismo de retries configurável
 - ✅ Particionamento de filas por tenant ou cliente
-- ✅ Armazenamento persistente com PostgreSQL
+- ✅ Armazenamento persistente com MySQL
 - ✅ Dead Letter Queue (DLQ) para eventos não entregues
 - ✅ Monitoramento com Prometheus e Grafana
 - ✅ Gerenciamento de assinaturas (endpoints, headers, status)
@@ -44,7 +44,7 @@ O EventSure atua como um **event delivery gateway**, permitindo que sistemas pub
 | Linguagem          | Java 17                   |
 | Framework          | Spring Boot 3             |
 | Mensageria         | RabbitMQ ou Kafka         |
-| Banco de dados     | PostgreSQL                |
+| Banco de dados     | MySQL                     |
 | Cache e DLQ        | Redis                     |
 | Documentação API   | SpringDoc OpenAPI         |
 | Observabilidade    | Micrometer + Prometheus   |
@@ -69,4 +69,4 @@ Após subir a aplicação, acesse:
 git clone https://github.com/andretavares20/eventsure.git
 cd eventsure
 cp .env.example .env
-docker-compose up --build
+docker-compose up --build -d

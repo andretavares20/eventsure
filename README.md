@@ -1,4 +1,4 @@
-<img width="1591" height="651" alt="image" src="https://github.com/user-attachments/assets/7d34fe6b-c09a-4742-b286-c43f14a7359c" /># 🛰️ EventSure
+# 🛰️ EventSure
 
 **EventSure** é uma plataforma robusta e extensível para **entrega confiável de eventos via Webhooks**.  
 Projetado para resolver problemas de confiabilidade, escalabilidade e rastreabilidade no envio de eventos entre sistemas distribuídos.

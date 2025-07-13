@@ -70,3 +70,92 @@ git clone https://github.com/andretavares20/eventsure.git
 cd eventsure
 cp .env.example .env
 docker-compose up --build -d
+```
+
+A aplicação será exposta em `http://localhost:8080`.
+
+### 🔹 Rodando localmente com Maven
+
+> Requer MySQL, Redis e RabbitMQ rodando localmente (ou via Docker).
+
+```bash
+./mvnw spring-boot:run
+```
+
+---
+
+## 📄 .env.example
+
+```env
+# Database
+SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/eventsure
+SPRING_DATASOURCE_USERNAME=eventsure
+SPRING_DATASOURCE_PASSWORD=eventsure123
+
+# Redis
+SPRING_REDIS_HOST=redis
+SPRING_REDIS_PORT=6379
+
+# RabbitMQ
+SPRING_RABBITMQ_HOST=rabbitmq
+SPRING_RABBITMQ_PORT=5672
+SPRING_RABBITMQ_USERNAME=guest
+SPRING_RABBITMQ_PASSWORD=guest
+
+# Server
+SERVER_PORT=8080
+```
+
+---
+
+## 🧪 Exemplo de Uso End-to-End
+
+### 🔹 Comandos `cURL`
+
+```bash
+# Criar assinatura
+curl -X POST http://localhost:8080/api/subscriptions   -H "Content-Type: application/json"   -d '{
+    "name": "MeuWebhook",
+    "url": "http://localhost:4000/webhook",
+    "eventTypes": ["user.created", "user.updated"]
+}'
+
+# Enviar evento
+curl -X POST http://localhost:8080/api/events   -H "Content-Type: application/json"   -d '{
+    "eventType": "user.created",
+    "payload": {
+      "id": "123",
+      "name": "João"
+    },
+    "eventId": "evt-001"
+}'
+
+# Verificar status de entrega
+curl http://localhost:8080/api/events/evt-001/delivery-status
+```
+
+---
+
+### 🔹 Postman Collection
+
+Importe o arquivo `examples/postman-collection.json` no Postman para testar:
+
+- Criar assinatura
+- Enviar evento
+- Verificar status da entrega
+
+---
+
+### 🔹 Mock Webhook Receiver (opcional)
+
+Execute um receptor de webhook local para testes:
+
+```bash
+cd examples
+npm install express
+node mock-server.js
+```
+
+> Isso inicia um servidor escutando em `http://localhost:4000/webhook` que imprime os eventos recebidos.
+
+---

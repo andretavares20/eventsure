@@ -1,72 +1,74 @@
-🛰️ EventSure
-EventSure é uma plataforma robusta e extensível para entrega confiável de eventos via Webhooks. Foi projetada para resolver problemas de confiabilidade, escalabilidade e rastreabilidade no envio de eventos entre sistemas distribuídos.
+# 🛰️ EventSure
 
-🚀 Visão Geral
-O EventSure atua como um event delivery gateway, permitindo que sistemas publiquem eventos que são processados, armazenados, entregues e monitorados com segurança. A plataforma oferece:
+**EventSure** é uma plataforma robusta e extensível para **entrega confiável de eventos via Webhooks**.  
+Projetado para resolver problemas de confiabilidade, escalabilidade e rastreabilidade no envio de eventos entre sistemas distribuídos.
 
-Garantia de entrega com retries e backoff exponencial
+---
 
-Controle de assinaturas e destinos por serviço
+## 🚀 Visão Geral
 
-Observabilidade com logs, métricas e dead-letter
+O EventSure atua como um **event delivery gateway**, permitindo que sistemas publiquem eventos que são processados, armazenados, entregues e monitorados com segurança.
 
-Isolamento entre serviços via partições
+### Funcionalidades principais:
+- Garantia de entrega com retries e backoff exponencial
+- Controle de assinaturas e destinos por serviço
+- Observabilidade com logs, métricas e dead-letter
+- Isolamento entre serviços via partições
+- API simples e escalável para publicação e gerenciamento
 
-API simples e escalável para publicação e gerenciamento
+---
 
-🧩 Principais Recursos
-✅ Publicação de Eventos via API REST
+## 🧩 Principais Recursos
 
-✅ Entregas assíncronas com mecanismo de retries
+- ✅ Publicação de eventos via API REST
+- ✅ Entregas assíncronas com mecanismo de retries configurável
+- ✅ Particionamento de filas por tenant ou cliente
+- ✅ Armazenamento persistente com PostgreSQL
+- ✅ Dead Letter Queue (DLQ) para eventos não entregues
+- ✅ Monitoramento com Prometheus e Grafana
+- ✅ Gerenciamento de assinaturas (endpoints, headers, status)
+- ✅ Idempotência com controle por `eventId`
 
-✅ Particionamento de filas por tenant ou cliente
+---
 
-✅ Armazenamento persistente com PostgreSQL
+## 🧱 Arquitetura
 
-✅ Dead Letter Queue (DLQ) para eventos falhos
+![Diagrama de Arquitetura](docs/diagrama-arquitetura-eventsure.png)
 
-✅ Monitoramento e métricas com Prometheus/Grafana
+<sub>📌 Você pode editar ou gerar esse diagrama em: [https://excalidraw.com](https://excalidraw.com)</sub>
 
-✅ Gerenciamento de assinaturas (endpoints + headers customizados)
+---
 
-✅ Idempotência com controle por eventId
+## ⚙️ Stack Utilizada
 
-✅ Diagrama de fluxo incluído
+| Camada             | Tecnologia                |
+|--------------------|---------------------------|
+| Linguagem          | Java 17                   |
+| Framework          | Spring Boot 3             |
+| Mensageria         | RabbitMQ ou Kafka         |
+| Banco de dados     | PostgreSQL                |
+| Cache e DLQ        | Redis                     |
+| Documentação API   | SpringDoc OpenAPI         |
+| Observabilidade    | Micrometer + Prometheus   |
+| Orquestração local | Docker Compose            |
+| Testes             | JUnit 5, Testcontainers   |
 
-🧱 Arquitetura
+---
 
-<sub>Você pode gerar o diagrama no https://excalidraw.com ou usar Mermaid no README se preferir Markdown puro.</sub>
+## 🔎 Swagger UI
 
-⚙️ Stack Utilizada
-Camada	Tecnologia
-Linguagem	Java 17
-Framework	Spring Boot 3
-Mensageria	RabbitMQ ou Kafka
-Banco de dados	PostgreSQL
-Cache e DLQ	Redis
-Documentação API	SpringDoc OpenAPI
-Observabilidade	Micrometer, Prometheus
-Orquestração local	Docker Compose
-Testes	JUnit 5, Testcontainers
+Após subir a aplicação, acesse:
 
-🔎 Swagger UI
-Após rodar a aplicação localmente, acesse:
+👉 [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html)
 
-👉 http://localhost:8080/swagger-ui.html
+---
 
-🧪 Como Rodar
-🔹 Com Docker Compose
-bash
-Copiar
-Editar
+## 🧪 Como Rodar
+
+### 🔹 Usando Docker Compose
+
+```bash
 git clone https://github.com/andretavares20/eventsure.git
 cd eventsure
 cp .env.example .env
 docker-compose up --build
-🔹 Ou com Maven (modo dev)
-Certifique-se que PostgreSQL e Redis estejam ativos localmente.
-
-bash
-Copiar
-Editar
-./mvnw spring-boot:run

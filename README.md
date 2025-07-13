@@ -59,6 +59,11 @@ Após subir a aplicação, acesse:
 
 👉 [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html)
 
+📄 Para visualizar a especificação OpenAPI:
+
+- JSON: [`http://localhost:8080/v3/api-docs`](http://localhost:8080/v3/api-docs)
+- [Editor Swagger Online](https://editor.swagger.io/?url=http://localhost:8080/v3/api-docs)
+
 ---
 
 ## 🧪 Como Rodar

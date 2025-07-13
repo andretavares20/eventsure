@@ -33,7 +33,7 @@ O EventSure atua como um **event delivery gateway**, permitindo que sistemas pub
 
 ## 🧱 Arquitetura
 
-<img width="1158" height="470" alt="image" src="https://github.com/user-attachments/assets/f1992c4f-7b99-4953-a152-4f60fd11e955" />
+<img width="1612" height="693" alt="image" src="https://github.com/user-attachments/assets/051a4db3-e64c-4058-a0d6-23f22aee72a3" />
 
 ---
 

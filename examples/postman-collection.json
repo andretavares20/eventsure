@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "EventSure API Collection",
+    "_postman_id": "fcd3a871-3f3c-40ae-b163-1234567890ab",
+    "description": "Coleção de testes da API EventSure - criação de subscription, envio de evento e status de entrega.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Criar Subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"MeuWebhook\",\n  \"url\": \"http://localhost:4000/webhook\",\n  \"eventTypes\": [\"user.created\", \"user.updated\"]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/subscriptions",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "subscriptions"]
+        }
+      }
+    },
+    {
+      "name": "Enviar Evento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventType\": \"user.created\",\n  \"payload\": {\n    \"id\": \"123\",\n    \"name\": \"João\"\n  },\n  \"eventId\": \"evt-001\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/events",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "events"]
+        }
+      }
+    },
+    {
+      "name": "Consultar Status do Evento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/events/evt-001/delivery-status",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "events", "evt-001", "delivery-status"]
+        }
+      }
+    }
+  ]
+}

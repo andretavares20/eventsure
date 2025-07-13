@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_DATABASE: eventsure
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: eventsure
+      MYSQL_PASSWORD: eventsure123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - eventsure-net
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - eventsure-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # painel de gerenciamento
+    networks:
+      - eventsure-net
+
+  eventsure-api:
+    build:
+      context: .
+    container_name: eventsure-api
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - eventsure-net
+  
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - eventsure-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - eventsure-net
+volumes:
+  mysql_data:
+
+networks:
+  eventsure-net:
+    driver: bridge

@@ -1,4 +1,4 @@
-# 🛰️ EventSure
+<img width="1591" height="651" alt="image" src="https://github.com/user-attachments/assets/7d34fe6b-c09a-4742-b286-c43f14a7359c" /># 🛰️ EventSure
 
 **EventSure** é uma plataforma robusta e extensível para **entrega confiável de eventos via Webhooks**.  
 Projetado para resolver problemas de confiabilidade, escalabilidade e rastreabilidade no envio de eventos entre sistemas distribuídos.
@@ -33,9 +33,7 @@ O EventSure atua como um **event delivery gateway**, permitindo que sistemas pub
 
 ## 🧱 Arquitetura
 
-![Diagrama de Arquitetura](docs/diagrama-arquitetura-eventsure.png)
-
-<sub>📌 Você pode editar ou gerar esse diagrama em: [https://excalidraw.com](https://excalidraw.com)</sub>
+<img width="1158" height="470" alt="image" src="https://github.com/user-attachments/assets/f1992c4f-7b99-4953-a152-4f60fd11e955" />
 
 ---
 
